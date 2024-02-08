@@ -1,6 +1,5 @@
 import google_auth_oauthlib
 from google.oauth2.credentials import Credentials
-
 from seo_keyword_planner.env import Environment
 
 
