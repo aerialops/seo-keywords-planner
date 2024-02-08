@@ -1,7 +1,7 @@
 import google_auth_oauthlib
 from google.oauth2.credentials import Credentials
 
-from keyword_planner.env import Environment
+from seo_keyword_planner.env import Environment
 
 
 def authenticate_oauth_in_browser(env: Environment) -> Credentials:

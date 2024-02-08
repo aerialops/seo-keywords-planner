@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "seo-keywork-planner"
+name = "seo-keyword-planner"
 version = "0.1.0"
 description = ""
 authors = ["Cauã Rinaldi <cauarinaldi451@gmail.com>"]
 readme = "README.md"
-packages = [{include = "seo_keywork_planner"}]
+packages = [{include = "seo_keyword_planner"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
