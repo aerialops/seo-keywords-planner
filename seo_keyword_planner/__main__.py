@@ -1,6 +1,7 @@
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.v15.services.services.keyword_plan_idea_service import KeywordPlanIdeaServiceClient
 from google.ads.googleads.v15.services.types.keyword_plan_idea_service import GenerateKeywordIdeasRequest
+from google.ads.googleads.v15.enums.types.keyword_plan_network import KeywordPlanNetworkEnum
 from sqlalchemy import DateTime
 
 from seo_keyword_planner.database import session
@@ -44,6 +45,7 @@ def main():
     request.language = 'languageConstants/1000'
     request.include_adult_keywords = False
     request.geo_target_constants = query_geo_target_by_name(args.location, client, env)
+    request.keyword_plan_network = KeywordPlanNetworkEnum.KeywordPlanNetwork.GOOGLE_SEARCH
 
     # Copied from https://developers.google.com/google-ads/api/docs/keyword-planning/generate-keyword-ideas#python
     # To generate keyword ideas with only a page_url and no keywords we need
@@ -65,19 +67,6 @@ def main():
         request.keyword_and_url_seed.keywords.extend(args.keywords)
 
     response = service.generate_keyword_ideas(request)
-    print([KeywordIdea(
-        # Storing all possible information
-        keyword=idea.text,
-        original_keywords=args.keywords,
-        original_url=args.url,
-        competition=idea.keyword_idea_metrics.competition.name,
-        competition_index=idea.keyword_idea_metrics.competition_index,
-        low_top_of_page_bid_micros=idea.keyword_idea_metrics.low_top_of_page_bid_micros,
-        high_top_of_page_bid_micros=idea.keyword_idea_metrics.high_top_of_page_bid_micros,
-        average_cpc_micros=idea.keyword_idea_metrics.average_cpc_micros,
-        close_variants=', '.join(idea.close_variants),
-        concepts=', '.join((f"{concept.concept_group}/{concept.name}" for concept in idea.keyword_annotations.concepts)),
-    ) for idea in response])
     session.add_all([KeywordIdea(
         # Storing all possible information
         keyword=idea.text,
