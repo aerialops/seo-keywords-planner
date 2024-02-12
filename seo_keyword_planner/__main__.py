@@ -10,9 +10,8 @@ from google.ads.googleads.v15.enums.types.keyword_plan_network import (
 
 from seo_keyword_planner.database import session
 from seo_keyword_planner.env import parse_env
-from seo_keyword_planner.geo_target import query_geo_target_by_name
 from seo_keyword_planner.models.keyword_idea import KeywordIdea
-from seo_keyword_planner.oauth import find_customer_id, load_client_or_prompt_login
+from seo_keyword_planner.oauth import load_client_or_prompt_login
 import argparse
 
 
@@ -26,11 +25,6 @@ def parse_args():
         "--url",
         help="A specific url to generate ideas from. For example: www.example.com/cars.",
     )
-    parser.add_argument(
-        "--location",
-        default="United States",
-        help="The human-readable name of the location to target. For example: United States, Seattle",
-    )
 
     return parser.parse_args()
 
@@ -39,17 +33,18 @@ def main():
     env = parse_env()
     args = parse_args()
 
-    customer_id, client = load_client_or_prompt_login(env)
+    client = load_client_or_prompt_login(env)
+    print(f'Logged in as {client.customer_id}')
 
-    service: KeywordPlanIdeaServiceClient = client.get_service("KeywordPlanIdeaService")
-    request: GenerateKeywordIdeasRequest = client.get_type(
+    service: KeywordPlanIdeaServiceClient = client.client.get_service("KeywordPlanIdeaService")
+    request: GenerateKeywordIdeasRequest = client.client.get_type(
         "GenerateKeywordIdeasRequest"
     )
-    request.customer_id = customer_id
+    request.customer_id = client.customer_id
     # https://developers.google.com/google-ads/api/data/codes-formats#languages
     request.language = "languageConstants/1000"
     request.include_adult_keywords = False
-    request.geo_target_constants = query_geo_target_by_name(args.location, client, env)
+    # TODO: select geographic target (defaults to US)
     request.keyword_plan_network = (
         KeywordPlanNetworkEnum.KeywordPlanNetwork.GOOGLE_SEARCH
     )
@@ -73,31 +68,33 @@ def main():
         request.keyword_and_url_seed.url = args.url
         request.keyword_and_url_seed.keywords.extend(args.keywords)
 
+    print("Fetching Keyword Ideas...")
+
     response = service.generate_keyword_ideas(request)
-    session.add_all(
-        [
-            KeywordIdea(
-                # Storing all possible information
-                keyword=idea.text,
-                original_keywords=args.keywords,
-                original_url=args.url,
-                competition=idea.keyword_idea_metrics.competition.name,
-                competition_index=idea.keyword_idea_metrics.competition_index,
-                low_top_of_page_bid_micros=idea.keyword_idea_metrics.low_top_of_page_bid_micros,
-                high_top_of_page_bid_micros=idea.keyword_idea_metrics.high_top_of_page_bid_micros,
-                average_cpc_micros=idea.keyword_idea_metrics.average_cpc_micros,
-                close_variants=", ".join(idea.close_variants),
-                concepts=", ".join(
-                    (
-                        f"{concept.concept_group}/{concept.name}"
-                        for concept in idea.keyword_annotations.concepts
-                    )
-                ),
-            )
-            for idea in response
-        ]
-    )
+    ideas = [
+        KeywordIdea(
+            # Storing all possible information
+            keyword=idea.text,
+            original_keywords=args.keywords,
+            original_url=args.url,
+            competition=idea.keyword_idea_metrics.competition.name,
+            competition_index=idea.keyword_idea_metrics.competition_index,
+            low_top_of_page_bid_micros=idea.keyword_idea_metrics.low_top_of_page_bid_micros,
+            high_top_of_page_bid_micros=idea.keyword_idea_metrics.high_top_of_page_bid_micros,
+            average_cpc_micros=idea.keyword_idea_metrics.average_cpc_micros,
+            close_variants=", ".join(idea.close_variants),
+            concepts=", ".join(
+                (
+                    f"{concept.concept_group}/{concept.name}"
+                    for concept in idea.keyword_annotations.concepts
+                )
+            ),
+        )
+        for idea in response
+    ]
+    session.add_all(ideas)
     session.commit()
+    print(f"Stored {len(ideas)} ideas")
 
 
 if __name__ == "__main__":

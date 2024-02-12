@@ -21,6 +21,14 @@ class StoredCredentials(BaseModel):
     customer_id: str
 
 
+class ClientWithCustomerId(BaseModel):
+    customer_id: str
+    client: GoogleAdsClient
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 def authenticate_oauth_in_browser(env: Environment) -> Credentials:
     return google_auth_oauthlib.get_user_credentials(
         scopes=["https://www.googleapis.com/auth/adwords"],
@@ -67,31 +75,29 @@ def create_client(env: Environment, refresh_token: str) -> GoogleAdsClient:
     )
 
 
-def try_load_from_storage(env: Environment) -> Optional[tuple[str, GoogleAdsClient]]:
+def try_load_from_storage(env: Environment) -> Optional[ClientWithCustomerId]:
     stored_json = keyring.get_password(SERVICE_NAME, env.OAUTH_CLIENT_ID)
-    stored_token = StoredCredentials.parse_obj(json.loads(stored_json))
 
-    if not stored_token:
-        return None
     try:
-        return stored_token.customer_id, create_client(env, stored_token.refresh_token)
-    except GoogleAuthError:
+        stored_token = StoredCredentials.model_validate_json(stored_json)
+        return ClientWithCustomerId(customer_id=stored_token.customer_id,
+                                    client=create_client(env, stored_token.refresh_token))
+    except Exception:
         return None
 
 
-def load_client_or_prompt_login(env: Environment) -> tuple[str, GoogleAdsClient]:
-    stored_customer_id, stored_client = try_load_from_storage(env)
+def load_client_or_prompt_login(env: Environment) -> ClientWithCustomerId:
+    stored_client = try_load_from_storage(env)
 
     if stored_client:
-        print("Logged in as ", stored_customer_id)
-        return stored_customer_id, stored_client
+        return stored_client
 
     credentials = authenticate_oauth_in_browser(env)
     client = create_client(env, credentials.refresh_token)
     customer_id = find_customer_id(client)
 
-    keyring.set_password(SERVICE_NAME, env.OAUTH_CLIENT_ID, json.dumps(StoredCredentials(
+    keyring.set_password(SERVICE_NAME, env.OAUTH_CLIENT_ID, StoredCredentials(
         customer_id=customer_id,
         refresh_token=credentials.refresh_token,
-    )))
-    return customer_id, client
+    ).model_dump_json())
+    return ClientWithCustomerId(customer_id=customer_id, client=client)
