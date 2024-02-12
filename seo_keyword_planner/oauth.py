@@ -1,7 +1,5 @@
-import json
 from typing import Optional
 
-from google.auth.exceptions import GoogleAuthError
 import google_auth_oauthlib
 import keyring
 from google.ads.googleads.client import GoogleAdsClient
@@ -80,8 +78,10 @@ def try_load_from_storage(env: Environment) -> Optional[ClientWithCustomerId]:
 
     try:
         stored_token = StoredCredentials.model_validate_json(stored_json)
-        return ClientWithCustomerId(customer_id=stored_token.customer_id,
-                                    client=create_client(env, stored_token.refresh_token))
+        return ClientWithCustomerId(
+            customer_id=stored_token.customer_id,
+            client=create_client(env, stored_token.refresh_token),
+        )
     except Exception:
         return None
 
@@ -96,8 +96,12 @@ def load_client_or_prompt_login(env: Environment) -> ClientWithCustomerId:
     client = create_client(env, credentials.refresh_token)
     customer_id = find_customer_id(client)
 
-    keyring.set_password(SERVICE_NAME, env.OAUTH_CLIENT_ID, StoredCredentials(
-        customer_id=customer_id,
-        refresh_token=credentials.refresh_token,
-    ).model_dump_json())
+    keyring.set_password(
+        SERVICE_NAME,
+        env.OAUTH_CLIENT_ID,
+        StoredCredentials(
+            customer_id=customer_id,
+            refresh_token=credentials.refresh_token,
+        ).model_dump_json(),
+    )
     return ClientWithCustomerId(customer_id=customer_id, client=client)

@@ -34,9 +34,11 @@ def main():
     args = parse_args()
 
     client = load_client_or_prompt_login(env)
-    print(f'Logged in as {client.customer_id}')
+    print(f"Logged in as {client.customer_id}")
 
-    service: KeywordPlanIdeaServiceClient = client.client.get_service("KeywordPlanIdeaService")
+    service: KeywordPlanIdeaServiceClient = client.client.get_service(
+        "KeywordPlanIdeaService"
+    )
     request: GenerateKeywordIdeasRequest = client.client.get_type(
         "GenerateKeywordIdeasRequest"
     )
