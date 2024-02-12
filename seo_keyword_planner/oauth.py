@@ -105,3 +105,7 @@ def load_client_or_prompt_login(env: Environment) -> ClientWithCustomerId:
         ).model_dump_json(),
     )
     return ClientWithCustomerId(customer_id=customer_id, client=client)
+
+
+def logout(env: Environment):
+    keyring.delete_password(SERVICE_NAME, env.OAUTH_CLIENT_ID)

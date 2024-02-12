@@ -9,30 +9,30 @@ from google.ads.googleads.v15.enums.types.keyword_plan_network import (
 )
 
 from seo_keyword_planner.database import session
-from seo_keyword_planner.env import parse_env
+from seo_keyword_planner.env import parse_env, Environment
 from seo_keyword_planner.models.keyword_idea import KeywordIdea
-from seo_keyword_planner.oauth import load_client_or_prompt_login
+from seo_keyword_planner.oauth import load_client_or_prompt_login, logout
 import argparse
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    command_subparsers = parser.add_subparsers(dest="command")
+    fetch_parser = command_subparsers.add_parser("fetch")
+    fetch_parser.add_argument(
         "--keywords",
         help="A Keyword or phrase to generate ideas from. For example: startup law.",
     )
-    parser.add_argument(
+    fetch_parser.add_argument(
         "--url",
         help="A specific url to generate ideas from. For example: www.example.com/cars.",
     )
+    command_subparsers.add_parser("logout")
 
     return parser.parse_args()
 
 
-def main():
-    env = parse_env()
-    args = parse_args()
-
+def fetch_keyword_ideas(env: Environment, args):
     client = load_client_or_prompt_login(env)
     print(f"Logged in as {client.customer_id}")
 
@@ -97,6 +97,17 @@ def main():
     session.add_all(ideas)
     session.commit()
     print(f"Stored {len(ideas)} ideas")
+
+
+def main():
+    env = parse_env()
+    args = parse_args()
+
+    if args.command == "logout":
+        logout(env)
+        print("Logged out")
+    else:
+        fetch_keyword_ideas(env, args)
 
 
 if __name__ == "__main__":
