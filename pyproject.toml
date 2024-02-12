@@ -13,6 +13,9 @@ google-auth-oauthlib = "^1.2.0"
 google-ads = "^23.0.0"
 pydantic = "^2.6.1"
 sqlalchemy = "^2.0.25"
+whaaaaat = "^0.5.2"
+prompt-toolkit = "1.0.14"
+keyring = "^24.3.0"
 
 
 [build-system]

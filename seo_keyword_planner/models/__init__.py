@@ -1,4 +1,4 @@
-from .base import BaseModel
+from .base import BaseDbModel
 from .keyword_idea import KeywordIdea
 
-__all__ = ['BaseModel', 'KeywordIdea']
+__all__ = ["BaseDbModel", "KeywordIdea"]
