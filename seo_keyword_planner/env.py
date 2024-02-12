@@ -6,7 +6,6 @@ class Environment(BaseModel):
     OAUTH_CLIENT_ID: str
     OAUTH_CLIENT_SECRET: str
     GOOGLE_ADS_DEV_TOKEN: str
-    GOOGLE_ADS_CUSTOMER_ID: str
 
 
 def parse_env() -> Environment:

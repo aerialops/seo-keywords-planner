@@ -39,14 +39,13 @@ def main():
     env = parse_env()
     args = parse_args()
 
-    client = load_client_or_prompt_login(env)
-    customer_id = find_customer_id(client)
+    customer_id, client = load_client_or_prompt_login(env)
 
     service: KeywordPlanIdeaServiceClient = client.get_service("KeywordPlanIdeaService")
     request: GenerateKeywordIdeasRequest = client.get_type(
         "GenerateKeywordIdeasRequest"
     )
-    request.customer_id = env.GOOGLE_ADS_CUSTOMER_ID
+    request.customer_id = customer_id
     # https://developers.google.com/google-ads/api/data/codes-formats#languages
     request.language = "languageConstants/1000"
     request.include_adult_keywords = False

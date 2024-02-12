@@ -1,9 +1,11 @@
+import json
 from typing import Optional
 
 from google.auth.exceptions import GoogleAuthError
 import google_auth_oauthlib
 import keyring
 from google.ads.googleads.client import GoogleAdsClient
+from pydantic import BaseModel
 from whaaaaat import prompt, print_json
 from google.ads.googleads.v15.services.services.customer_service import (
     CustomerServiceClient,
@@ -12,6 +14,11 @@ from google.oauth2.credentials import Credentials
 from seo_keyword_planner.env import Environment
 
 SERVICE_NAME = "seo-keyword-planner"
+
+
+class StoredCredentials(BaseModel):
+    refresh_token: str
+    customer_id: str
 
 
 def authenticate_oauth_in_browser(env: Environment) -> Credentials:
@@ -60,24 +67,31 @@ def create_client(env: Environment, refresh_token: str) -> GoogleAdsClient:
     )
 
 
-def try_load_from_storage(env: Environment) -> Optional[GoogleAdsClient]:
-    stored_token = keyring.get_password(SERVICE_NAME, env.OAUTH_CLIENT_ID)
+def try_load_from_storage(env: Environment) -> Optional[tuple[str, GoogleAdsClient]]:
+    stored_json = keyring.get_password(SERVICE_NAME, env.OAUTH_CLIENT_ID)
+    stored_token = StoredCredentials.parse_obj(json.loads(stored_json))
+
     if not stored_token:
         return None
     try:
-        return create_client(env, stored_token)
+        return stored_token.customer_id, create_client(env, stored_token.refresh_token)
     except GoogleAuthError:
         return None
 
 
-def load_client_or_prompt_login(env: Environment) -> GoogleAdsClient:
-    stored_client = try_load_from_storage(env)
-    print(stored_client.login_customer_id)
+def load_client_or_prompt_login(env: Environment) -> tuple[str, GoogleAdsClient]:
+    stored_customer_id, stored_client = try_load_from_storage(env)
+
     if stored_client:
-        print("Logged in as ")
-        return stored_client
+        print("Logged in as ", stored_customer_id)
+        return stored_customer_id, stored_client
 
     credentials = authenticate_oauth_in_browser(env)
     client = create_client(env, credentials.refresh_token)
-    keyring.set_password(SERVICE_NAME, env.OAUTH_CLIENT_ID, credentials.refresh_token)
-    return client
+    customer_id = find_customer_id(client)
+
+    keyring.set_password(SERVICE_NAME, env.OAUTH_CLIENT_ID, json.dumps(StoredCredentials(
+        customer_id=customer_id,
+        refresh_token=credentials.refresh_token,
+    )))
+    return customer_id, client
