@@ -26,20 +26,3 @@ class KeywordIdea(BaseDbModel):
 
     close_variants: Mapped[Optional[str]]
     concepts: Mapped[Optional[str]]
-
-    def __repr__(self):
-        return (
-            f"KeywordIdea(id={self.id}, "
-            f"keyword={self.keyword}, "
-            f"original_keywords={self.original_keywords}, "
-            f"original_url={self.original_url}, "
-            f"query_time={self.query_time}, "
-            f"competition={self.competition}, "
-            f"competition_index={self.competition_index}, "
-            f"avg_monthly_searches={self.avg_monthly_searches}, "
-            f"low_top_of_page_bid_micros={self.low_top_of_page_bid_micros}, "
-            f"high_top_of_page_bid_micros={self.high_top_of_page_bid_micros}, "
-            f"average_cpc_micros={self.average_cpc_micros}, "
-            f"close_variants={self.close_variants}, "
-            f"concepts={self.concepts})"
-        )
