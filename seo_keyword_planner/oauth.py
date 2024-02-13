@@ -50,7 +50,7 @@ def find_customer_id(client: GoogleAdsClient) -> str:
             "type": "list",
             "name": "customer_id",
             "message": "Multiple customers found for this account. Please select the one you'd like to use. "
-                       "Tip: You can check the ids in this page https://ads.google.com/nav/selectaccount",
+            "Tip: You can check the ids in this page https://ads.google.com/nav/selectaccount",
             "choices": customer_ids,
         },
     ]

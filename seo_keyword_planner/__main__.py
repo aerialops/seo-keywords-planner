@@ -10,6 +10,7 @@ from google.ads.googleads.v15.enums.types.keyword_plan_network import (
 
 from seo_keyword_planner.database import session
 from seo_keyword_planner.env import parse_env, Environment
+from seo_keyword_planner.geo_target import find_geo_target
 from seo_keyword_planner.models.keyword_idea import KeywordIdea
 from seo_keyword_planner.oauth import load_client_or_prompt_login, logout
 import argparse
@@ -26,6 +27,11 @@ def parse_args():
     fetch_parser.add_argument(
         "--url",
         help="A specific url to generate ideas from. For example: www.example.com/cars.",
+    )
+    fetch_parser.add_argument(
+        "--location",
+        help="The name of a geographical location. For example: US, Seattle, Washington.",
+        default="United States",
     )
     command_subparsers.add_parser("logout")
 
@@ -46,7 +52,9 @@ def fetch_keyword_ideas(env: Environment, args):
     # https://developers.google.com/google-ads/api/data/codes-formats#languages
     request.language = "languageConstants/1000"
     request.include_adult_keywords = False
-    # TODO: select geographic target (defaults to US)
+    request.geo_target_constants = [
+        find_geo_target(client, args.location).resource_name
+    ]
     request.keyword_plan_network = (
         KeywordPlanNetworkEnum.KeywordPlanNetwork.GOOGLE_SEARCH
     )
