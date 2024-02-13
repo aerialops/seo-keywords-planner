@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "seo-keyword-planner"
+version = "0.1.0"
+description = ""
+authors = ["Cauã Rinaldi <cauarinaldi451@gmail.com>"]
+readme = "README.md"
+packages = [{include = "seo_keyword_planner"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+python-dotenv = "^1.0.1"
+google-auth-oauthlib = "^1.2.0"
+google-ads = "^23.0.0"
+pydantic = "^2.6.1"
+sqlalchemy = "^2.0.25"
+whaaaaat = "^0.5.2"
+prompt-toolkit = "1.0.14"
+keyring = "^24.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
