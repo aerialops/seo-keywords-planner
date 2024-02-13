@@ -5,7 +5,7 @@ from seo_keyword_planner.models.base import BaseDbModel
 
 
 class KeywordIdea(BaseDbModel):
-    __tablename__ = "idea"
+    __tablename__ = "keyword_idea"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     keyword: Mapped[str]
