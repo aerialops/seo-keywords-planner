@@ -53,7 +53,9 @@ def enhance_keyword_idea(
     keyword: GenerateKeywordIdeaResult, keywords: Optional[str], url: Optional[str]
 ) -> KeywordIdea:
     monthly_searches = [
-        month.monthly_searches for month in keyword.keyword_idea_metrics.monthly_search_volumes if month.monthly_searches
+        month.monthly_searches
+        for month in keyword.keyword_idea_metrics.monthly_search_volumes
+        if month.monthly_searches
     ]
     average_monthly_searches = (
         round(sum(monthly_searches) / len(monthly_searches), 2)
