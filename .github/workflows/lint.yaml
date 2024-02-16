@@ -1,0 +1,29 @@
+name: CI linting
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3.5.3
+
+      - name: Setup Python, Poetry and Dependencies
+        uses: packetcoders/action-setup-cache-python-poetry@v1.0.3
+        with:
+          python-version: 3.9.16
+          poetry-version: 1.5.1
+
+      - name: Ruff linting
+        run: poetry run ruff .
+
+      - name: Black formatting
+        run: poetry run black --check .
