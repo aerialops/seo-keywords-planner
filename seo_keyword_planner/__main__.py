@@ -115,6 +115,7 @@ def fetch_keyword_ideas(
     request.keyword_plan_network = (
         KeywordPlanNetworkEnum.KeywordPlanNetwork.GOOGLE_SEARCH
     )
+    # Without this average_cpc_micros is always 0
     request.historical_metrics_options.include_average_cpc = True
 
     # Copied from https://developers.google.com/google-ads/api/docs/keyword-planning/generate-keyword-ideas#python
