@@ -57,7 +57,7 @@ def enhance_keyword_idea(
         for month in keyword.keyword_idea_metrics.monthly_search_volumes
         if month.monthly_searches
     ]
-    average_monthly_searches = (
+    avg_monthly_searches = (
         round(sum(monthly_searches) / len(monthly_searches), 2)
         if len(monthly_searches) >= 1
         else None
@@ -89,7 +89,7 @@ def enhance_keyword_idea(
                 for concept in keyword.keyword_annotations.concepts
             )
         ),
-        average_monthly_searches=average_monthly_searches,
+        avg_monthly_searches=avg_monthly_searches,
         three_month_change_percent=three_month_change_percent,
         year_change_percent=year_change_percent,
     )
@@ -115,6 +115,7 @@ def fetch_keyword_ideas(
     request.keyword_plan_network = (
         KeywordPlanNetworkEnum.KeywordPlanNetwork.GOOGLE_SEARCH
     )
+    request.historical_metrics_options.include_average_cpc = True
 
     # Copied from https://developers.google.com/google-ads/api/docs/keyword-planning/generate-keyword-ideas#python
     # To generate keyword ideas with only a page_url and no keywords we need

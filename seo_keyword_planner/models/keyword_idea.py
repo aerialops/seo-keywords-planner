@@ -27,6 +27,5 @@ class KeywordIdea(BaseDbModel):
     close_variants: Mapped[Optional[str]]
     concepts: Mapped[Optional[str]]
 
-    average_monthly_searches: Mapped[Optional[float]]
     three_month_change_percent: Mapped[Optional[float]]
     year_change_percent: Mapped[Optional[float]]
