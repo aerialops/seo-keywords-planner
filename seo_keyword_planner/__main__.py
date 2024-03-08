@@ -69,7 +69,7 @@ def calc_change_percent(current: float, previous: float) -> float:
 
 
 def enhance_keyword_idea(
-    keyword: GenerateKeywordIdeaResult, keywords: Optional[str], url: Optional[str]
+        keyword: GenerateKeywordIdeaResult, keywords: Optional[str], url: Optional[str]
 ) -> KeywordIdea:
     monthly_searches = [
         month.monthly_searches
@@ -110,7 +110,8 @@ def enhance_keyword_idea(
         ),
         is_brand=any(
             concept.concept_group.type_
-            == KeywordPlanConceptGroupTypeEnum.KeywordPlanConceptGroupType.BRAND
+            in [KeywordPlanConceptGroupTypeEnum.KeywordPlanConceptGroupType.BRAND,
+                KeywordPlanConceptGroupTypeEnum.KeywordPlanConceptGroupType.OTHER_BRANDS]
             for concept in keyword.keyword_annotations.concepts
         ),
         avg_monthly_searches=avg_monthly_searches,
@@ -120,10 +121,10 @@ def enhance_keyword_idea(
 
 
 def fetch_keyword_ideas(
-    client: ClientWithCustomerId,
-    keywords: Optional[str],
-    url: Optional[str],
-    location: Optional[str],
+        client: ClientWithCustomerId,
+        keywords: Optional[str],
+        url: Optional[str],
+        location: Optional[str],
 ) -> list[GenerateKeywordIdeaResult]:
     service: KeywordPlanIdeaServiceClient = client.client.get_service(
         "KeywordPlanIdeaService"
