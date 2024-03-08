@@ -47,6 +47,19 @@ def parse_args():
         default="United States",
     )
     command_subparsers.add_parser("logout")
+    count_subparser = command_subparsers.add_parser("count")
+    count_subparser.add_argument(
+        "--brands",
+        help="Whether to only count brands",
+        action="store_true",
+        default=False,
+    )
+    count_subparser.add_argument(
+        "--keywords", help="Keywords that were used to generate the keywords"
+    )
+    count_subparser.add_argument(
+        "--url", help="Url that was used to generate the keywords"
+    )
 
     return parser.parse_args()
 
@@ -156,6 +169,17 @@ def fetch_keyword_ideas(
     return list(service.generate_keyword_ideas(request))
 
 
+def count_keywords(args):
+    query_filter = {
+        **({"original_keywords": args.keywords} if args.keywords else {}),
+        **({"original_url": args.url} if args.url else {}),
+        **({"is_brand": args.brands} if args.brands else {}),
+    }
+    query = session.query(KeywordIdea).filter_by(**query_filter)
+    unique = set(item.keyword for item in query)
+    print(len(unique))
+
+
 def generate_and_insert_keyword_ideas(env: Environment, args):
     client = load_client_or_prompt_login(env)
     print(f"Logged in as {client.customer_id}")
@@ -179,6 +203,8 @@ def main():
     if args.command == "logout":
         logout(env)
         print("Logged out")
+    elif args.command == "count":
+        count_keywords(args)
     else:
         generate_and_insert_keyword_ideas(env, args)
 
