@@ -1,5 +1,11 @@
 from typing import Optional
 
+from google.ads.googleads.v15.enums.types.keyword_plan_keyword_annotation import (
+    KeywordPlanKeywordAnnotationEnum,
+)
+from google.ads.googleads.v15.enums.types.keyword_plan_concept_group_type import (
+    KeywordPlanConceptGroupTypeEnum,
+)
 from google.ads.googleads.v15.services.services.keyword_plan_idea_service import (
     KeywordPlanIdeaServiceClient,
 )
@@ -85,9 +91,14 @@ def enhance_keyword_idea(
         close_variants=", ".join(keyword.close_variants),
         concepts=", ".join(
             (
-                f"{concept.concept_group}/{concept.name}"
+                f"{concept.concept_group.type_.name}/{concept.name}"
                 for concept in keyword.keyword_annotations.concepts
             )
+        ),
+        is_brand=any(
+            concept.concept_group.type_
+            == KeywordPlanConceptGroupTypeEnum.KeywordPlanConceptGroupType.BRAND
+            for concept in keyword.keyword_annotations.concepts
         ),
         avg_monthly_searches=avg_monthly_searches,
         three_month_change_percent=three_month_change_percent,
@@ -117,6 +128,10 @@ def fetch_keyword_ideas(
     )
     # Without this average_cpc_micros is always 0
     request.historical_metrics_options.include_average_cpc = True
+    # Include concepts
+    request.keyword_annotation.append(
+        KeywordPlanKeywordAnnotationEnum.KeywordPlanKeywordAnnotation.KEYWORD_CONCEPT
+    )
 
     # Copied from https://developers.google.com/google-ads/api/docs/keyword-planning/generate-keyword-ideas#python
     # To generate keyword ideas with only a page_url and no keywords we need
