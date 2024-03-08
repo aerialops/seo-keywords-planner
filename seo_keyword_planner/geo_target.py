@@ -1,3 +1,6 @@
+import pathlib
+
+import joblib
 from google.ads.googleads.v15.resources.types.geo_target_constant import (
     GeoTargetConstant,
 )
@@ -50,6 +53,12 @@ def _prompt_geo_targets(
     return targets[selected_index]
 
 
+geo_target_memory = joblib.Memory(
+    pathlib.Path(__file__).parent.parent / ".cache" / "geo_target"
+)
+
+
+@geo_target_memory.cache(ignore=["client"])
 def find_geo_target(client: ClientWithCustomerId, query: str) -> GeoTargetConstant:
     found = _query_geo_target_by_name(client, query)
     if len(found) == 0:

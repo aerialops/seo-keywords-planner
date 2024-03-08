@@ -7,3 +7,6 @@
 
 # Database
 /database.sqlite
+
+# Cache
+.cache
