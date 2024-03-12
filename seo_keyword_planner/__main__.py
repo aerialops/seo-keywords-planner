@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 from google.ads.googleads.v15.enums.types.keyword_plan_keyword_annotation import (
@@ -35,7 +36,7 @@ def parse_args():
     fetch_parser = command_subparsers.add_parser("fetch")
     fetch_parser.add_argument(
         "--keywords",
-        help="A Keyword or phrase to generate ideas from. For example: startup law.",
+        help="A Keyword or phrase to generate ideas from. Use ';' to separate groups. For example: startup law.",
     )
     fetch_parser.add_argument(
         "--url",
@@ -148,6 +149,7 @@ def fetch_keyword_ideas(
     request.keyword_annotation.append(
         KeywordPlanKeywordAnnotationEnum.KeywordPlanKeywordAnnotation.KEYWORD_CONCEPT
     )
+    individual_keywords = keywords.split(";")
 
     # Copied from https://developers.google.com/google-ads/api/docs/keyword-planning/generate-keyword-ideas#python
     # To generate keyword ideas with only a page_url and no keywords we need
@@ -159,17 +161,29 @@ def fetch_keyword_ideas(
     # we need to initialize a KeywordSeed object and set the "keywords" field
     # to be a list of StringValue objects.
     if keywords and not url:
-        request.keyword_seed.keywords.extend(keywords.split(" "))
+        request.keyword_seed.keywords.extend(individual_keywords)
 
     # To generate keyword ideas using both a list of keywords and a page_url we
     # need to initialize a KeywordAndUrlSeed object, setting both the "url" and
     # "keywords" fields.
     if keywords and url:
         request.keyword_and_url_seed.url = url
-        request.keyword_and_url_seed.keywords.extend(keywords)
+        request.keyword_and_url_seed.keywords.extend(individual_keywords)
 
     print("Fetching Keyword Ideas...")
-    return list(service.generate_keyword_ideas(request))
+
+    def fetch_retry(retry_count=3):
+        try:
+            return list(service.generate_keyword_ideas(request))
+        except Exception as e:
+            if retry_count > 0:
+                print(f"Fetch failed with error {e}. Waiting to retry...")
+                # Wait in case of "API quota exceeded" errors
+                time.sleep(60)
+                return fetch_retry(retry_count - 1)
+            raise e
+
+    return fetch_retry()
 
 
 def count_keywords(args):
