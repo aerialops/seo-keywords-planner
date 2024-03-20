@@ -47,6 +47,11 @@ def parse_args():
         help="The name of a geographical location. For example: US, Seattle, Washington.",
         default="United States",
     )
+    fetch_parser.add_argument(
+        "--skip-present",
+        action="store_true",
+        help="Skip fetching if keywords for that combination of params already exists.",
+    )
     command_subparsers.add_parser("logout")
     count_subparser = command_subparsers.add_parser("count")
     count_subparser.add_argument(
@@ -61,6 +66,9 @@ def parse_args():
     count_subparser.add_argument(
         "--url", help="Url that was used to generate the keywords"
     )
+    count_subparser.add_argument(
+        "--location", help="Location that was used to generate the keywords"
+    )
 
     return parser.parse_args()
 
@@ -70,7 +78,10 @@ def calc_change_percent(current: float, previous: float) -> float:
 
 
 def enhance_keyword_idea(
-    keyword: GenerateKeywordIdeaResult, keywords: Optional[str], url: Optional[str]
+    keyword: GenerateKeywordIdeaResult,
+    keywords: Optional[str],
+    url: Optional[str],
+    location: Optional[str],
 ) -> KeywordIdea:
     monthly_searches = [
         month.monthly_searches
@@ -97,6 +108,7 @@ def enhance_keyword_idea(
         keyword=keyword.text,
         original_keywords=keywords,
         original_url=url,
+        original_location=location,
         competition=keyword.keyword_idea_metrics.competition.name,
         competition_index=keyword.keyword_idea_metrics.competition_index,
         low_top_of_page_bid_micros=keyword.keyword_idea_metrics.low_top_of_page_bid_micros,
@@ -186,18 +198,28 @@ def fetch_keyword_ideas(
     return fetch_retry()
 
 
-def count_keywords(args):
+def count_keywords(
+    original_keywords: Optional[str],
+    original_url: Optional[str],
+    original_location: Optional[str] = None,
+    is_brand: bool = False,
+) -> int:
     query_filter = {
-        **({"original_keywords": args.keywords} if args.keywords else {}),
-        **({"original_url": args.url} if args.url else {}),
-        **({"is_brand": args.brands} if args.brands else {}),
+        **({"original_keywords": original_keywords} if original_keywords else {}),
+        **({"original_url": original_url} if original_url else {}),
+        **({"original_location": original_location} if original_location else {}),
+        **({"is_brand": is_brand} if is_brand else {}),
     }
     query = session.query(KeywordIdea).filter_by(**query_filter)
     unique = set(item.keyword for item in query)
-    print(len(unique))
+    return len(unique)
 
 
 def generate_and_insert_keyword_ideas(env: Environment, args):
+    if args.skip_present and count_keywords(args.keywords, args.url, args.location):
+        print("Keywords already stored for this combination")
+        return
+
     client = load_client_or_prompt_login(env)
     print(f"Logged in as {client.customer_id}")
 
@@ -205,7 +227,9 @@ def generate_and_insert_keyword_ideas(env: Environment, args):
         client, keywords=args.keywords, url=args.url, location=args.location
     )
     ideas = [
-        enhance_keyword_idea(idea, keywords=args.keywords, url=args.url)
+        enhance_keyword_idea(
+            idea, keywords=args.keywords, url=args.url, location=args.location
+        )
         for idea in keyword_ideas
     ]
     session.add_all(ideas)
@@ -221,9 +245,11 @@ def main():
         logout(env)
         print("Logged out")
     elif args.command == "count":
-        count_keywords(args)
-    else:
+        print(count_keywords(args.keywords, args.url, args.location, args.brands))
+    elif args.command == "fetch":
         generate_and_insert_keyword_ideas(env, args)
+    else:
+        raise ValueError(f"Unknown command: {args.command}")
 
 
 if __name__ == "__main__":
