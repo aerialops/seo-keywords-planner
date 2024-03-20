@@ -12,6 +12,7 @@ class KeywordIdea(BaseDbModel):
 
     original_keywords: Mapped[Optional[str]]
     original_url: Mapped[Optional[str]]
+    original_location: Mapped[Optional[str]]
     query_time: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
